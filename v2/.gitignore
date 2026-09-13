@@ -1,0 +1,8 @@
+.next/
+.next-ui/
+node_modules/
+.env
+.env.local
+coverage/
+.data/
+*.tsbuildinfo

@@ -1,199 +1,142 @@
 # My Knowledge Base - 个人知识库
 
-> 基于AI的个人知识库管理工具，支持智能总结与知识关联
+当前主要开发版本是 **[Knowledge Context V2](./v2/README.md)**：面向个人项目复盘和长期上下文积累的本地知识库，提供资料问答、可追溯引用、用户确认后的长期记忆，以及文件搜索和紫灰色工作台 UI。
 
-## 🚀 功能特性
+## 从 V2 开始
 
-✅ **核心功能**
-- 📝 笔记CRUD（创建、读取、更新、删除）
-- 🤖 AI智能总结（Hugging Face）
-- 🔗 知识关联推荐（TF-IDF算法）
-- 💾 GitHub存储（自动同步）
-- 🔍 搜索与标签筛选
-- 🔗 知识关联可视化
+需要 Node.js 24 和 pnpm。在仓库目录中运行：
 
-✅ **AI能力**
-- 使用 Mistral-7B 模型生成摘要
-- 智能识别相似主题
-- 本地相似度计算
-
-✅ **数据存储**
-- GitHub Repository 存储
-- JSON格式笔记
-- 历史版本管理
-
-## ⚙️ 配置步骤（5分钟）
-
-### 第1步：创建GitHub仓库
-
-1. 访问 https://github.com/new
-2. 创建公开仓库：`my-knowledge-base-meituan`
-3. 勾选 "Add a README file"
-
-### 第2步：生成GitHub Token
-
-1. 访问 https://github.com/settings/tokens
-2. 点击 "Generate new token" → "Generate new token (classic)"
-3. 填写信息：
-   - Note: `knowledge-base`
-   - Expiration: `No expiration`
-   - Scopes: 勾选 `repo` 和 `workflow`
-4. 点击生成，**复制token**（格式：`ghp_xxxxxxxxxxxxxxxxxxxx`）
-
-### 第3步：配置知识库
-
-1. 打开 `index.html`
-2. 点击右上角 "⚙️ 配置" 按钮
-3. 填入GitHub Token和仓库名称
-4. 点击 "保存配置"
-
-## 🌐 部署到GitHub Pages（2分钟）
-
-### 方法1：自动部署（推荐）
-
-在项目根目录创建 `.github/workflows/deploy.yml`：
-
-```yaml
-name: Deploy to GitHub Pages
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+```powershell
+cd v2
+pnpm install --frozen-lockfile
+Copy-Item .env.example .env.local
+# 在 .env.local 中填写模型配置；默认不需要 PostgreSQL。
+pnpm dev
 ```
 
-### 方法2：手动部署
+打开 <http://127.0.0.1:3000>。生产构建：`pnpm build`，启动：`pnpm start`。
 
-1. 进入仓库 Settings → Pages
-2. Source 选择 "Deploy from a branch"
-3. Branch 选择 `main` 分支，`/ (root)` 目录
-4. 点击 Save
-5. 访问 `https://hematemessis.github.io/my-knowledge-base-meituan/`
+- [使用与配置说明](./v2/README.md)
+- [项目介绍、产品设计、技术路径与 AI 协作复盘](./docs/PROJECT_REVIEW.md)
+- [架构与实现边界](./v2/ARCHITECTURE.md)
+- [资料问答验收记录](./v2/docs/M2-ACCEPTANCE.md)
+- [新版 UI 与验证记录](./v2/docs/ui-refresh-20260913.md)
 
-## 🔧 本地运行
+**边界：**V2 目前是本机单用户产品，检索采用关键词匹配而非向量检索；引用可追溯不等于事实审核全部通过。资料默认留在本机，问答所需内容会发送给配置的模型服务。没有登录隔离，不应直接暴露到公网。GitHub 发布的是代码，不包含个人资料、数据库或密钥，也不等于上线了公开可用的 AI 服务。
 
-直接用浏览器打开 `index.html` 文件即可使用！
+## V1（保留的早期版本）
 
-或者使用Python启动本地服务器：
-```bash
+仓库根目录的 `index.html` 与 `server.mjs` 是早期版本，提供笔记管理、文件导入、本地相关笔记推荐，以及可选的服务端 AI 总结、标签和知识库问答。以下说明适用于 V1；新用户请优先使用上面的 V2。
+
+> 安全提醒：早期版本曾把 Hugging Face Token 写入前端和 README。新版已经移除该密钥，但旧 Token 仍可能存在于 Git 历史或旧部署缓存中，必须前往 [Hugging Face Token 设置](https://huggingface.co/settings/tokens)立即吊销并重新创建。
+
+## 当前能力
+
+- 笔记创建、编辑、删除、全文搜索和标签筛选
+- 浏览器本地持久化（`localStorage`）
+- JSON 备份导入和导出
+- PDF、DOCX 文本导入
+- 根据标题、正文和标签计算本地相关笔记
+- 服务端 AI 总结、标签、对话和规划模式
+- 问答时从本地笔记中检索相关片段并提供给 AI
+- 桌面端和移动端响应式布局
+- 未保存修改提醒和损坏数据恢复
+
+## 重要边界
+
+- 当前数据默认只保存在当前浏览器，不会自动同步到 GitHub。
+- 相关笔记和问答检索使用轻量文本相似度，不是向量数据库或完整 RAG。
+- PDF 最多读取前 20 页，单次导入内容最多保留约 10 万字符。
+- PDF/DOCX 解析组件从固定版本的 jsDelivr CDN 加载；离线时文件导入不可用。
+- GitHub Pages 只能托管前端，不能安全保存 AI Token，因此 AI 会降级为本地摘要和标签。
+
+## 快速使用
+
+只使用本地笔记功能：
+
+```powershell
 python -m http.server 8000
-# 访问 http://localhost:8000
 ```
 
-## 🎨 使用指南
+然后访问 <http://127.0.0.1:8000>。
 
-### 创建笔记
-1. 点击 "✨ 新建笔记"
-2. 输入标题、标签和内容
-3. 点击 "💾 保存到GitHub"
+### 启用安全 AI 服务
 
-### AI总结
-1. 在编辑器中输入内容（至少50字）
-2. 点击 "生成AI总结"
-3. AI会自动生成摘要并追加到笔记末尾
+需要 Node.js 20 或更高版本。Token 只设置在服务端环境变量中，不会发送到浏览器源码。
 
-### 知识关联
-- 系统会自动计算笔记相似度
-- 在笔记底部显示相关知识
-- 点击关联笔记可直接跳转
+PowerShell：
 
-### 搜索与筛选
-- 顶部搜索框支持全文搜索
-- 点击标签可快速筛选
-- 支持多标签组合筛选
-
-## 🧠 AI技术细节
-
-### Hugging Face API调用
-
-```javascript
-POST https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2
-Headers:
-  - Authorization: Bearer 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
-  - Content-Type: application/json
-
-Body:
-  {
-    "inputs": "<s>[INST]请总结以下内容：{笔记内容}[/INST]",
-    "parameters": {
-      "max_new_tokens": 150,
-      "temperature": 0.3
-    }
-  }
+```powershell
+$env:HF_TOKEN="你的新Token"
+$env:HF_MODEL="Qwen/Qwen3-32B"
+npm start
 ```
 
-### 相似度算法
+然后访问 <http://127.0.0.1:8000>。
 
-使用TF-IDF + 标签权重：
-- 标签匹配：权重 0.5
-- 文本相似度：权重 0.5
-- 相似度阈值：0.3（显示前5条）
+也可以参考 `.env.example` 配置部署平台的环境变量。项目不会自动读取 `.env` 文件，避免为了一个小项目引入额外依赖；本地可直接使用系统环境变量，托管平台则在控制台中设置 Secret。
 
-## 📂 项目结构
+## 架构
 
+```text
+浏览器
+  ├─ localStorage：笔记数据
+  ├─ 本地相似度：相关笔记与检索
+  └─ POST /api/ai
+          │
+          ▼
+server.mjs
+  ├─ 环境变量中的 HF_TOKEN
+  ├─ 请求大小限制与简单限流
+  └─ Hugging Face Inference Providers
 ```
-my-knowledge-base-meituan/
-├── index.html          # 主应用（单文件）
-├── README.md           # 说明文档
-└── assets/             # 静态资源
-    └── icon.png        # 图标
+
+服务端使用 Hugging Face 当前的 OpenAI 兼容路由：
+
+```text
+POST https://router.huggingface.co/v1/chat/completions
 ```
 
-## 🆘 常见问题
+默认模型可以通过 `HF_MODEL` 覆盖。模型是否可用取决于 Hugging Face 账户和 Inference Provider 配置。
 
-**Q: 保存失败？**
-A: 检查GitHub Token是否有repo权限，仓库是否已创建
+## 部署说明
 
-**Q: AI总结无响应？**
-A: Hugging Face模型可能需要预热，首次调用较慢（约10-30秒）
+### 仅部署静态前端
 
-**Q: 如何分享知识库？**
-A: 部署到GitHub Pages后，分享链接：`https://hematemessis.github.io/my-knowledge-base-meituan/`
+可以继续使用 GitHub Pages。笔记、搜索、导入导出和本地相关笔记可用；AI 请求会安全失败并自动使用本地摘要或标签。
 
-**Q: 数据安全吗？**
-A: 所有数据存储在你的GitHub仓库中，只有你能访问（除非设为公开）
+### 部署完整版本
 
-## 📊 开发进度
+选择支持 Node.js 20 和环境变量的托管平台，启动命令设为：
 
-- [x] 项目框架搭建
-- [x] 笔记CRUD功能
-- [x] AI智能总结
-- [x] 知识关联推荐
-- [x] GitHub存储集成
-- [x] 搜索与筛选
-- [ ] Chrome扩展（计划中）
-- [ ] 文件导入（计划中）
-- [ ] 知识图谱可视化（计划中）
+```text
+npm start
+```
 
-## 📝 更新日志
+在平台中配置：
 
-### v0.1.0 (2025-03-22)
-- ✨ 初始版本发布
-- ✨ 实现核心功能
-- ✨ 集成Hugging Face AI
-- ✨ GitHub存储支持
+- `HF_TOKEN`：重新创建的 Hugging Face Token
+- `HF_MODEL`：可选，默认 `Qwen/Qwen3-32B`
+- `PORT`：通常由托管平台自动注入
+- `HOST`：托管平台通常设为 `0.0.0.0`，本机默认 `127.0.0.1`
 
-## 🙏 致谢
+不要把 Token 写入 HTML、JavaScript、README、GitHub Actions 输出或任何 `NEXT_PUBLIC_*` / `VITE_*` 前端变量。
 
-- Hugging Face 提供免费的AI模型API
-- GitHub 提供免费的Pages托管服务
-- Mistral AI 提供优秀的开源模型
+## 数据与隐私
 
-## 📄 许可证
+- 笔记保存在当前站点域名对应的浏览器存储中。
+- 清除浏览器站点数据会删除笔记，请定期使用左上角“导出备份”。
+- 只有在主动使用 AI 对话、总结或标签时，相关文本才会发送给本项目的 `/api/ai`，再由服务端转发给模型提供商。
+- 不建议在公开 GitHub 仓库中保存私人笔记明文。
 
-MIT License
+## 后续路线
 
----
+- IndexedDB 或数据库存储，以及账号同步
+- 文档切片、Embedding、向量检索和逐条来源引用
+- 多文档工作区与权限控制
+- 自动化测试和端到端测试
+- 将第三方解析依赖改为自托管构建产物
 
-**作者**：AI产品经理  
-**GitHub**：https://github.com/Hematemessis/my-knowledge-base-meituan
+## License
+
+MIT

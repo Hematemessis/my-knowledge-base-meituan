@@ -22,6 +22,7 @@
             display: flex;
             height: 100vh;
             position: relative;
+            overflow: hidden;
         }
 
         /* 左侧笔记列表栏 */
@@ -32,13 +33,13 @@
             border-right: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, margin 0.3s ease;
             position: relative;
             flex-shrink: 0;
         }
 
         .sidebar.collapsed {
-            transform: translateX(-280px);
+            margin-left: -280px;
         }
 
         .sidebar-header {
@@ -325,13 +326,13 @@
             border-left: 1px solid rgba(255, 255, 255, 0.3);
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, margin 0.3s ease;
             position: relative;
             flex-shrink: 0;
         }
 
         .ai-panel.collapsed {
-            transform: translateX(380px);
+            margin-right: -380px;
         }
 
         .ai-panel-header {
@@ -370,6 +371,7 @@
             border-radius: 8px;
             max-width: 85%;
             word-wrap: break-word;
+            white-space: pre-wrap;
         }
 
         .chat-message.user {
@@ -455,6 +457,25 @@
 
         .chat-send-btn:hover {
             background: #2563eb;
+        }
+
+        .chat-send-btn:disabled,
+        .ai-btn:disabled,
+        .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .service-status {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #4b5563;
+            background: #f9fafb;
         }
 
         /* AI按钮样式 */
@@ -588,6 +609,46 @@
             background: rgba(219, 234, 254, 0.3);
         }
 
+        .btn-primary {
+            border: none;
+            border-radius: 6px;
+            color: white;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .related-section {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .related-section h4 {
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .related-note-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 8px;
+            padding: 10px 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            color: #1f2937;
+            background: #eff6ff;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .related-note-btn:hover {
+            background: #dbeafe;
+        }
+
         /* 工具提示气泡框 */
         .tooltip-bubble {
             position: fixed;
@@ -642,6 +703,64 @@
         .hidden {
             display: none !important;
         }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                inset: 0 auto 0 0;
+                z-index: 30;
+                box-shadow: 8px 0 24px rgba(0, 0, 0, 0.12);
+            }
+
+            .sidebar.collapsed {
+                margin-left: 0;
+                transform: translateX(-280px);
+            }
+
+            .editor-container {
+                width: 100%;
+                min-width: 100%;
+            }
+
+            .editor-toolbar {
+                overflow-x: auto;
+                padding-left: 28px;
+            }
+
+            .editor-content {
+                padding: 18px;
+            }
+
+            .ai-panel {
+                position: absolute;
+                inset: 0 0 0 auto;
+                width: min(380px, 100vw);
+                z-index: 30;
+                box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+            }
+
+            .ai-panel.collapsed {
+                margin-right: 0;
+                transform: translateX(100%);
+            }
+
+            .ai-collapse-btn {
+                right: min(380px, 100vw);
+            }
+
+            .ai-collapse-btn.collapsed {
+                right: 0;
+            }
+
+            .collapse-btn,
+            .ai-collapse-btn {
+                z-index: 40;
+            }
+
+            .save-btn {
+                padding: 8px 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -651,28 +770,31 @@
             <div class="sidebar-header">
                 <h2>我的笔记</h2>
                 <div class="sidebar-actions">
-                    <button class="icon-btn" onclick="createNewNote()" title="新建笔记">
+                    <button class="icon-btn" onclick="exportNotes()" title="导出备份" aria-label="导出备份">↓</button>
+                    <button class="icon-btn" onclick="document.getElementById('backupInput').click()" title="导入备份" aria-label="导入备份">↑</button>
+                    <input type="file" id="backupInput" class="hidden" accept="application/json,.json" onchange="importNotesBackup(this.files[0]).finally(() => this.value = '')">
+                    <button class="icon-btn" onclick="createNewNote()" title="新建笔记" aria-label="新建笔记">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
                     </button>
                 </div>
             </div>
-            
+
             <div class="search-box">
                 <input type="text" class="search-input" id="searchBox" placeholder="搜索笔记..." oninput="searchNotes()">
             </div>
-            
+
             <div class="tags-section">
                 <div class="tags-title">标签筛选</div>
                 <div class="tags-container" id="tagsContainer"></div>
             </div>
-            
+
             <div class="notes-list" id="notesList"></div>
         </div>
-        
+
         <!-- 左侧折叠按钮 -->
-        <button class="collapse-btn" id="collapseBtn" onclick="toggleSidebar()">
+        <button class="collapse-btn" id="collapseBtn" onclick="toggleSidebar()" aria-label="展开或收起笔记列表">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M15 19l-7-7 7-7"></path>
             </svg>
@@ -688,7 +810,7 @@
                     </svg>
                     返回
                 </button>
-                
+
                 <button class="toolbar-btn" id="btnBold" onclick="applyFormat('bold')" title="加粗">B</button>
                 <button class="toolbar-btn" id="btnItalic" onclick="applyFormat('italic')" title="斜体">I</button>
                 <button class="toolbar-btn" id="btnUnderline" onclick="applyFormat('underline')" title="下划线">U</button>
@@ -725,8 +847,12 @@
                         <label>标签</label>
                         <input type="text" id="noteTags" placeholder="输入标签，用逗号分隔...">
                     </div>
+                    <div class="related-section hidden" id="relatedSection">
+                        <h4>相关笔记</h4>
+                        <div id="relatedNotes"></div>
+                    </div>
                 </div>
-                
+
                 <div id="welcomeArea">
                     <div class="welcome-content">
                         <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #3b82f6, #6366f1); border-radius: 16px; display: flex; align-items: center; justify-content: center;">
@@ -737,18 +863,18 @@
                         <h3>欢迎使用知识库</h3>
                         <p>点击左侧笔记查看详情，或新建笔记开始记录</p>
                     </div>
-                    
+
                     <!-- 文件上传区域 - 始终在欢迎页显示 -->
                     <div class="file-upload-section">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="margin: 0 auto 16px;">
                             <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
                         <h4 style="color: #1f2937; margin-bottom: 8px;">上传文件到知识库</h4>
-                        <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">支持 PDF、DOCX 格式</p>
+                        <p id="fileUploadStatus" style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">支持 PDF、DOCX 格式</p>
                         <button class="btn-primary" onclick="document.getElementById('fileInput').click()" style="padding: 8px 16px;">
                             选择文件
                         </button>
-                        <input type="file" id="fileInput" style="display: none;" accept=".pdf,.docx" onchange="handleFileUpload(this.files[0])">
+                        <input type="file" id="fileInput" style="display: none;" accept=".pdf,.docx" onchange="handleFileUpload(this.files[0]).finally(() => this.value = '')">
                     </div>
                 </div>
             </div>
@@ -763,7 +889,7 @@
                     <button class="ai-btn ai-btn-success" onclick="generateAITags()">AI标签</button>
                 </div>
             </div>
-            
+
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
                     <div style="text-align: center; color: #9ca3af; margin-top: 32px;">
@@ -774,28 +900,25 @@
                         <p style="font-size: 12px; margin-top: 4px;">输入问题开始对话</p>
                     </div>
                 </div>
-                
+
                 <div class="chat-controls">
-                    <select class="model-selector" id="modelSelector">
-                        <option value="mistralai/Mistral-7B-Instruct-v0.2">Mistral-7B</option>
-                        <option value="google/flan-t5-large">Flan-T5</option>
-                    </select>
-                    
+                    <div class="service-status">AI 模型和密钥由服务端安全配置</div>
+
                     <div class="mode-selector" id="modeSelector">
                         <button class="mode-btn active" id="modeDialogue" onmouseenter="showModeTooltip(event, 'dialogue')" onmouseleave="hideModeTooltip()" onclick="setChatMode('dialogue')">对话</button>
                         <button class="mode-btn" id="modePlanning" onmouseenter="showModeTooltip(event, 'planning')" onmouseleave="hideModeTooltip()" onclick="setChatMode('planning')">规划</button>
                     </div>
-                    
+
                     <div class="chat-input-container">
                         <textarea class="chat-input" id="chatInput" placeholder="输入问题..." onkeypress="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
-                        <button class="chat-send-btn" onclick="sendChatMessage()">发送</button>
+                        <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">发送</button>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- AI面板折叠按钮 -->
-        <button class="ai-collapse-btn collapsed" id="aiCollapseBtn" onclick="toggleAiPanel()">
+        <button class="ai-collapse-btn collapsed" id="aiCollapseBtn" onclick="toggleAiPanel()" aria-label="展开或收起 AI 助手">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 5l7 7-7 7"></path>
             </svg>
@@ -805,6 +928,8 @@
     <!-- 工具提示气泡框 -->
     <div class="tooltip-bubble" id="modeTooltip"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js" integrity="sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y" crossorigin="anonymous"></script>
     <script>
         // 全局状态
         let notes = [];
@@ -813,15 +938,15 @@
         let chatMode = 'dialogue';
         let sidebarCollapsed = false;
         let aiPanelCollapsed = true;
-        let selectedModel = 'mistralai/Mistral-7B-Instruct-v0.2';
-
-        // Hugging Face API Key
-        const HF_API_KEY = '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';
+        let selectedTag = '';
+        let isDirty = false;
+        let lastMobileState = window.matchMedia('(max-width: 768px)').matches;
+        const STORAGE_KEY = 'knowledgeBase_notes';
 
         // 模式说明
         const modeDescriptions = {
-            dialogue: '<strong>对话模式</strong><br>适用于多种场景下的通用回答、思考推理和知识问答',
-            planning: '<strong>规划模式</strong><br>适合处理复杂任务，能够自主分解步骤并交付结果'
+            dialogue: '对话模式：适用于通用问答、解释和知识梳理',
+            planning: '规划模式：适合分解复杂任务并给出执行步骤'
         };
 
         // 初始化
@@ -829,87 +954,122 @@
             loadData();
             renderNotes();
             renderTags();
-            
-            // 绑定模型选择器
-            document.getElementById('modelSelector').addEventListener('change', function(e) {
-                selectedModel = e.target.value;
+            setupEditorListeners();
+            applyResponsiveDefaults();
+
+            if (typeof pdfjsLib !== 'undefined') {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+            }
+
+            const missingParsers = [];
+            if (typeof pdfjsLib === 'undefined') missingParsers.push('PDF');
+            if (typeof mammoth === 'undefined') missingParsers.push('DOCX');
+            if (missingParsers.length > 0) {
+                document.getElementById('fileUploadStatus').textContent =
+                    `${missingParsers.join('、')} 解析组件加载失败，请检查网络`;
+            }
+
+            window.addEventListener('resize', handleResponsiveResize);
+            window.addEventListener('beforeunload', event => {
+                if (isDirty) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
             });
         }
 
         // 加载数据
         function loadData() {
-            const savedNotes = localStorage.getItem('knowledgeBase_notes');
-            
-            if (savedNotes) {
-                notes = JSON.parse(savedNotes);
-            } else {
-                // 默认示例数据
-                notes = [
-                    {
-                        id: '1',
-                        title: '欢迎使用知识库',
-                        content: '这是一个基于AI的个人知识管理工具，支持智能总结和知识关联。\\n\\n功能特点：\\n- 笔记管理\\n- AI智能总结\\n- 知识关联\\n- GitHub存储',
-                        tags: ['欢迎', '教程'],
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    }
-                ];
+            const savedNotes = localStorage.getItem(STORAGE_KEY);
+
+            try {
+                if (savedNotes) {
+                    const parsed = JSON.parse(savedNotes);
+                    if (!Array.isArray(parsed)) throw new Error('备份格式不是数组');
+                    notes = normalizeNotes(parsed);
+                    return;
+                }
+            } catch (error) {
+                console.error('笔记数据读取失败：', error);
+                try {
+                    localStorage.setItem(`${STORAGE_KEY}_corrupt_${Date.now()}`, savedNotes);
+                } catch (_) {
+                    // 无法备份损坏数据时继续使用默认数据
+                }
+                alert('本地笔记数据已损坏，系统已尝试保留原始备份并恢复默认数据。');
             }
+
+            notes = [{
+                id: '1',
+                title: '欢迎使用知识库',
+                content: '这是一个本地优先的个人知识管理工具。\\n\\n功能特点：\\n- 笔记管理与搜索\\n- PDF、DOCX 导入\\n- 本地相关笔记推荐\\n- 可选的服务端 AI 总结与标签',
+                tags: ['欢迎', '教程'],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }];
         }
 
         // 保存数据
         function saveData() {
-            localStorage.setItem('knowledgeBase_notes', JSON.stringify(notes));
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+                return true;
+            } catch (error) {
+                console.error('笔记保存失败：', error);
+                alert('保存失败：浏览器存储空间可能不足，请先导出备份。');
+                return false;
+            }
         }
 
         // 渲染笔记列表
         function renderNotes() {
             const container = document.getElementById('notesList');
             const searchTerm = document.getElementById('searchBox').value.toLowerCase();
-            
-            let filteredNotes = notes;
-            
-            if (searchTerm) {
-                filteredNotes = notes.filter(n => 
-                    n.title.toLowerCase().includes(searchTerm) ||
-                    n.content.toLowerCase().includes(searchTerm)
-                );
-            }
-            
+
+            const filteredNotes = notes.filter(note => {
+                const matchesSearch = !searchTerm ||
+                    note.title.toLowerCase().includes(searchTerm) ||
+                    note.content.toLowerCase().includes(searchTerm) ||
+                    note.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                const matchesTag = !selectedTag || note.tags.includes(selectedTag);
+                return matchesSearch && matchesTag;
+            });
+
             container.innerHTML = '';
-            
+
             filteredNotes.forEach(note => {
                 const div = document.createElement('div');
                 div.className = 'note-card' + (currentNote && currentNote.id === note.id ? ' active' : '');
-                
+
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'note-header';
-                
+
                 const titleSpan = document.createElement('span');
                 titleSpan.className = 'note-title';
                 titleSpan.textContent = note.title;
                 headerDiv.appendChild(titleSpan);
-                
+
                 const actionsDiv = document.createElement('div');
                 actionsDiv.className = 'note-actions';
-                
+
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'note-delete-btn';
-                deleteBtn.innerHTML = '×';
+                deleteBtn.textContent = '×';
+                deleteBtn.setAttribute('aria-label', `删除笔记：${note.title}`);
                 deleteBtn.onclick = (e) => {
                     e.stopPropagation();
                     deleteNote(note.id);
                 };
                 actionsDiv.appendChild(deleteBtn);
-                
+
                 headerDiv.appendChild(actionsDiv);
                 div.appendChild(headerDiv);
-                
+
                 const previewP = document.createElement('p');
                 previewP.className = 'note-preview';
                 previewP.textContent = note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
                 div.appendChild(previewP);
-                
+
                 const tagsDiv = document.createElement('div');
                 tagsDiv.className = 'note-tags';
                 note.tags.forEach(tag => {
@@ -919,10 +1079,17 @@
                     tagsDiv.appendChild(span);
                 });
                 div.appendChild(tagsDiv);
-                
+
                 div.onclick = () => openNote(note);
                 container.appendChild(div);
             });
+
+            if (filteredNotes.length === 0) {
+                const empty = document.createElement('p');
+                empty.style.cssText = 'padding: 16px; color: #6b7280; text-align: center;';
+                empty.textContent = '没有匹配的笔记';
+                container.appendChild(empty);
+            }
         }
 
         // 渲染标签
@@ -930,16 +1097,21 @@
             const container = document.getElementById('tagsContainer');
             const allTags = new Set();
             notes.forEach(n => n.tags.forEach(t => allTags.add(t)));
-            
+
             container.innerHTML = '';
-            allTags.forEach(tag => {
+            ['全部', ...Array.from(allTags).sort()].forEach(tag => {
                 const span = document.createElement('span');
                 span.className = 'tag';
                 span.style.cursor = 'pointer';
                 span.textContent = tag;
+                const tagValue = tag === '全部' ? '' : tag;
+                if (selectedTag === tagValue) {
+                    span.style.boxShadow = '0 0 0 2px #1d4ed8';
+                }
                 span.onclick = () => {
-                    document.getElementById('searchBox').value = tag;
-                    searchNotes();
+                    selectedTag = tagValue;
+                    renderTags();
+                    renderNotes();
                 };
                 container.appendChild(span);
             });
@@ -957,27 +1129,32 @@
                 saveData();
                 renderNotes();
                 renderTags();
-                
+
                 if (currentNote && currentNote.id === noteId) {
-                    backToWelcome();
+                    backToWelcome(true);
                 }
             }
         }
 
         // 打开笔记
         function openNote(note) {
-            currentNote = note;
+            if (!confirmDiscardChanges()) return;
+            currentNote = { ...note, tags: [...note.tags] };
+            isDirty = false;
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('welcomeArea').classList.add('hidden');
             document.getElementById('noteTitle').value = note.title;
             document.getElementById('noteContent').value = note.content;
             document.getElementById('noteTags').value = note.tags.join(', ');
             document.getElementById('backBtn').classList.remove('hidden');
+            renderRelatedNotes();
             renderNotes();
+            if (isMobile()) setSidebarCollapsed(true);
         }
 
         // 新建笔记
         function createNewNote() {
+            if (!confirmDiscardChanges()) return;
             currentNote = {
                 id: Date.now().toString(),
                 title: '',
@@ -986,43 +1163,50 @@
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
-            
+            isDirty = false;
+
             document.getElementById('editorArea').classList.remove('hidden');
             document.getElementById('welcomeArea').classList.add('hidden');
             document.getElementById('noteTitle').value = '';
             document.getElementById('noteContent').value = '';
             document.getElementById('noteTags').value = '';
             document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('relatedSection').classList.add('hidden');
             document.getElementById('noteTitle').focus();
+            if (isMobile()) setSidebarCollapsed(true);
         }
 
         // 返回欢迎页
-        function backToWelcome() {
+        function backToWelcome(force = false) {
+            if (!force && !confirmDiscardChanges()) return;
             currentNote = null;
+            isDirty = false;
             document.getElementById('editorArea').classList.add('hidden');
             document.getElementById('welcomeArea').classList.remove('hidden');
             document.getElementById('backBtn').classList.add('hidden');
+            document.getElementById('relatedSection').classList.add('hidden');
+            renderNotes();
         }
 
         // 保存笔记
         function saveNote() {
             if (!currentNote) return;
-            
-            currentNote.title = document.getElementById('noteTitle').value || '未命名笔记';
-            currentNote.content = document.getElementById('noteContent').value;
-            currentNote.tags = document.getElementById('noteTags').value.split(',').map(t => t.trim()).filter(t => t);
-            currentNote.updatedAt = new Date().toISOString();
-            
+
+            syncCurrentNoteFromEditor();
+            currentNote.title = currentNote.title || '未命名笔记';
+
             const existingIndex = notes.findIndex(n => n.id === currentNote.id);
             if (existingIndex >= 0) {
-                notes[existingIndex] = currentNote;
+                notes[existingIndex] = { ...currentNote, tags: [...currentNote.tags] };
             } else {
-                notes.push(currentNote);
+                notes.push({ ...currentNote, tags: [...currentNote.tags] });
             }
-            
-            saveData();
+
+            if (!saveData()) return;
+            isDirty = false;
             renderNotes();
             renderTags();
+            renderRelatedNotes();
             alert('笔记已保存！');
         }
 
@@ -1030,16 +1214,16 @@
         function applyFormat(command) {
             const textarea = document.getElementById('noteContent');
             if (!textarea) return;
-            
+
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
             const selectedText = textarea.value.substring(start, end);
             const beforeText = textarea.value.substring(0, start);
             const afterText = textarea.value.substring(end);
-            
+
             let newText = '';
             let cursorOffset = 0;
-            
+
             switch (command) {
                 case 'bold':
                     newText = '**' + selectedText + '**';
@@ -1062,14 +1246,15 @@
                     cursorOffset = 3;
                     break;
             }
-            
+
             textarea.value = beforeText + newText + afterText;
             textarea.focus();
             textarea.selectionStart = start + cursorOffset;
             textarea.selectionEnd = start + cursorOffset + selectedText.length;
-            
+
             if (currentNote) {
                 currentNote.content = textarea.value;
+                isDirty = true;
             }
         }
 
@@ -1085,16 +1270,14 @@
 
         // 切换侧边栏
         function toggleSidebar() {
-            sidebarCollapsed = !sidebarCollapsed;
-            document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
-            document.getElementById('collapseBtn').classList.toggle('collapsed', sidebarCollapsed);
+            setSidebarCollapsed(!sidebarCollapsed);
+            if (isMobile() && !sidebarCollapsed) setAiPanelCollapsed(true);
         }
 
         // 切换AI面板
         function toggleAiPanel() {
-            aiPanelCollapsed = !aiPanelCollapsed;
-            document.getElementById('aiPanel').classList.toggle('collapsed', aiPanelCollapsed);
-            document.getElementById('aiCollapseBtn').classList.toggle('collapsed', aiPanelCollapsed);
+            setAiPanelCollapsed(!aiPanelCollapsed);
+            if (isMobile() && !aiPanelCollapsed) setSidebarCollapsed(true);
         }
 
         // 设置聊天模式
@@ -1109,8 +1292,8 @@
             const tooltip = document.getElementById('modeTooltip');
             const button = event.target;
             const rect = button.getBoundingClientRect();
-            
-            tooltip.innerHTML = modeDescriptions[mode];
+
+            tooltip.textContent = modeDescriptions[mode];
             tooltip.style.left = (rect.left + rect.width / 2) + 'px';
             tooltip.style.top = (rect.top - 60) + 'px';
             tooltip.style.transform = 'translateX(-50%)';
@@ -1125,15 +1308,18 @@
         // 添加聊天消息
         function addChatMessage(role, content) {
             chatMessages.push({ role, content });
-            
+
             const container = document.getElementById('chatMessages');
             if (chatMessages.length === 1) {
                 container.innerHTML = '';
             }
-            
+
             const div = document.createElement('div');
             div.className = 'chat-message ' + role;
-            div.innerHTML = '<div style="font-size: 14px;">' + content + '</div>';
+            const messageContent = document.createElement('div');
+            messageContent.style.fontSize = '14px';
+            messageContent.textContent = String(content);
+            div.appendChild(messageContent);
             container.appendChild(div);
             container.scrollTop = container.scrollHeight;
         }
@@ -1141,181 +1327,380 @@
         // 发送聊天消息
         async function sendChatMessage() {
             const input = document.getElementById('chatInput');
+            const sendButton = document.getElementById('chatSendBtn');
             const message = input.value.trim();
             if (!message) return;
-            
+
+            const history = chatMessages.slice(-10).map(item => ({
+                role: item.role === 'ai' ? 'assistant' : 'user',
+                content: item.content
+            }));
             addChatMessage('user', message);
             input.value = '';
-            
+
+            sendButton.disabled = true;
             try {
-                const response = await fetch('https://api-inference.huggingface.co/models/' + selectedModel, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + HF_API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        inputs: message,
-                        parameters: { max_new_tokens: 200 }
-                    })
+                const aiResponse = await requestAI({
+                    action: 'chat',
+                    message,
+                    mode: chatMode,
+                    history,
+                    context: buildKnowledgeContext(message)
                 });
-                
-                const data = await response.json();
-                const aiResponse = data[0]?.generated_text || 'AI服务暂时不可用';
                 addChatMessage('ai', aiResponse);
             } catch (error) {
-                addChatMessage('ai', 'AI服务暂时不可用，请稍后重试');
+                addChatMessage('ai', `AI 服务不可用：${error.message}`);
+            } finally {
+                sendButton.disabled = false;
             }
         }
 
         // AI生成总结
         async function generateAISummary() {
-            if (!currentNote || !currentNote.content) {
+            if (!currentNote) {
                 alert('请先输入笔记内容');
                 return;
             }
-            
+
+            syncCurrentNoteFromEditor();
+            const content = currentNote.content.trim();
+            if (!content) {
+                alert('请先输入笔记内容');
+                return;
+            }
+
             addChatMessage('user', '请总结这篇笔记');
-            
+
             try {
-                const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + HF_API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        inputs: '请总结以下内容（50字以内）：' + currentNote.content,
-                        parameters: { max_new_tokens: 100 }
-                    })
-                });
-                
-                const data = await response.json();
-                let summary = data[0]?.generated_text || '';
-                
-                if (summary.includes('请总结以下内容')) {
-                    summary = summary.split('请总结以下内容')[1] || summary;
-                }
-                
-                addChatMessage('ai', '**AI总结**：' + summary.trim());
+                const summary = await requestAI({ action: 'summary', content });
+                addChatMessage('ai', `AI 总结：${summary.trim()}`);
             } catch (error) {
-                // 备用方案
-                const sentences = currentNote.content.split(/[。！？\\n]+/).filter(s => s.trim().length > 10);
-                const summary = sentences.slice(0, 2).join('。');
-                addChatMessage('ai', '**AI总结**（本地）：' + summary);
+                const summary = createLocalSummary(content);
+                addChatMessage('ai', `本地摘要（AI 服务未配置或不可用）：${summary}`);
             }
         }
 
         // AI生成标签
         async function generateAITags() {
-            if (!currentNote || !currentNote.content) {
+            if (!currentNote) {
                 alert('请先输入笔记内容');
                 return;
             }
-            
+
+            syncCurrentNoteFromEditor();
+            const content = currentNote.content.trim();
+            if (!content) {
+                alert('请先输入笔记内容');
+                return;
+            }
+
             addChatMessage('user', '请为这篇笔记生成标签');
-            
+
+            let tags = [];
             try {
-                const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + HF_API_KEY,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        inputs: '请为以下内容生成3-5个关键词标签（2-4个字）：' + currentNote.content,
-                        parameters: { max_new_tokens: 50 }
-                    })
-                });
-                
-                const data = await response.json();
-                const result = data[0]?.generated_text || '';
-                
-                // 提取标签
-                const tags = result.split(/[,，、\\n]+/)
+                const result = await requestAI({ action: 'tags', content });
+                tags = result.split(/[,，、\\n]+/)
                     .map(tag => tag.trim().replace(/标签[:：]/g, ''))
                     .filter(tag => tag.length >= 2 && tag.length <= 6)
                     .slice(0, 5);
-                
-                if (tags.length > 0) {
-                    currentNote.tags = [...new Set([...currentNote.tags, ...tags])];
-                    document.getElementById('noteTags').value = currentNote.tags.join(', ');
-                    saveData();
-                    renderTags();
-                    addChatMessage('ai', '**AI标签**：' + tags.join(', '));
-                } else {
-                    throw new Error('未提取到有效标签');
-                }
             } catch (error) {
-                // 备用方案
-                const words = currentNote.content.match(/[\u4e00-\u9fa5]{2,4}/g) || [];
-                const freq = {};
-                words.forEach(word => {
-                    if (word.length >= 2 && word.length <= 4) {
-                        freq[word] = (freq[word] || 0) + 1;
-                    }
-                });
-                
-                const tags = Object.entries(freq)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 3)
-                    .map(item => item[0]);
-                
-                if (tags.length > 0) {
-                    currentNote.tags = [...new Set([...currentNote.tags, ...tags])];
-                    document.getElementById('noteTags').value = currentNote.tags.join(', ');
-                    saveData();
-                    renderTags();
-                    addChatMessage('ai', '**AI标签**（本地）：' + tags.join(', '));
-                }
+                tags = createLocalTags(content);
             }
+
+            if (tags.length === 0) {
+                addChatMessage('ai', '没有提取到有效标签。');
+                return;
+            }
+
+            const existingTags = document.getElementById('noteTags').value
+                .split(',').map(tag => tag.trim()).filter(Boolean);
+            const mergedTags = [...new Set([...existingTags, ...tags])];
+            document.getElementById('noteTags').value = mergedTags.join(', ');
+            isDirty = true;
+            addChatMessage('ai', `建议标签：${tags.join(', ')}（保存笔记后生效）`);
         }
 
         // 文件上传处理
         async function handleFileUpload(file) {
             if (!file) return;
-            
+            if (!confirmDiscardChanges()) return;
+
             try {
                 let content = '';
-                
-                if (file.type === 'application/pdf') {
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                if (file.type === 'application/pdf' || extension === 'pdf') {
+                    if (typeof pdfjsLib === 'undefined') throw new Error('PDF 解析组件加载失败，请检查网络后重试');
                     const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
                     const texts = [];
-                    
-                    for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+
+                    for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
                         const page = await pdf.getPage(i);
                         const textContent = await page.getTextContent();
                         const pageText = textContent.items.map(item => item.str).join(' ');
                         texts.push(pageText);
                     }
-                    
+
                     content = texts.join('\\n\\n');
-                } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || extension === 'docx') {
+                    if (typeof mammoth === 'undefined') throw new Error('DOCX 解析组件加载失败，请检查网络后重试');
                     const arrayBuffer = await file.arrayBuffer();
                     const result = await mammoth.extractRawText({ arrayBuffer });
                     content = result.value;
+                } else {
+                    throw new Error('仅支持 PDF 和 DOCX 文件');
                 }
 
-                if (content) {
-                    const newNote = {
-                        id: Date.now().toString(),
-                        title: file.name.replace(/\.[^/.]+$/, ''),
-                        content: content.substring(0, 5000),
-                        tags: [],
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                    };
-                    
-                    notes.push(newNote);
-                    saveData();
-                    renderNotes();
-                    renderTags();
-                    openNote(newNote);
-                    alert('文件已上传并创建笔记！');
+                content = content.trim();
+                if (!content) throw new Error('没有从文件中提取到文本');
+
+                const wasTruncated = content.length > 100000;
+                const newNote = {
+                    id: Date.now().toString(),
+                    title: file.name.replace(/\.[^/.]+$/, ''),
+                    content: content.substring(0, 100000) + (wasTruncated ? '\\n\\n[导入内容已截断]' : ''),
+                    tags: ['导入'],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                notes.push(newNote);
+                if (!saveData()) {
+                    notes.pop();
+                    return;
                 }
+                currentNote = null;
+                isDirty = false;
+                renderNotes();
+                renderTags();
+                openNote(newNote);
+                alert(`文件已导入并创建笔记${wasTruncated ? '，超长内容已截断' : ''}。`);
             } catch (error) {
                 alert('文件解析失败：' + error.message);
+            }
+        }
+
+        function normalizeNotes(value) {
+            const now = new Date().toISOString();
+            return value
+                .filter(item => item && typeof item === 'object')
+                .map((item, index) => ({
+                    id: String(item.id || `${Date.now()}-${index}`),
+                    title: String(item.title || '未命名笔记'),
+                    content: String(item.content || ''),
+                    tags: Array.isArray(item.tags)
+                        ? [...new Set(item.tags.map(tag => String(tag).trim()).filter(Boolean))]
+                        : [],
+                    createdAt: String(item.createdAt || now),
+                    updatedAt: String(item.updatedAt || item.createdAt || now)
+                }));
+        }
+
+        function setupEditorListeners() {
+            ['noteTitle', 'noteContent', 'noteTags'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    if (currentNote) isDirty = true;
+                });
+            });
+        }
+
+        function syncCurrentNoteFromEditor() {
+            if (!currentNote) return;
+            currentNote = {
+                ...currentNote,
+                title: document.getElementById('noteTitle').value.trim(),
+                content: document.getElementById('noteContent').value,
+                tags: document.getElementById('noteTags').value
+                    .split(',').map(tag => tag.trim()).filter(Boolean),
+                updatedAt: new Date().toISOString()
+            };
+        }
+
+        function confirmDiscardChanges() {
+            return !isDirty || confirm('当前笔记有未保存修改，确定放弃吗？');
+        }
+
+        function isMobile() {
+            return window.matchMedia('(max-width: 768px)').matches;
+        }
+
+        function setSidebarCollapsed(value) {
+            sidebarCollapsed = value;
+            document.getElementById('sidebar').classList.toggle('collapsed', value);
+            document.getElementById('collapseBtn').classList.toggle('collapsed', value);
+        }
+
+        function setAiPanelCollapsed(value) {
+            aiPanelCollapsed = value;
+            document.getElementById('aiPanel').classList.toggle('collapsed', value);
+            document.getElementById('aiCollapseBtn').classList.toggle('collapsed', value);
+        }
+
+        function applyResponsiveDefaults() {
+            if (isMobile()) setSidebarCollapsed(true);
+            setAiPanelCollapsed(true);
+        }
+
+        function handleResponsiveResize() {
+            const mobile = isMobile();
+            if (mobile === lastMobileState) return;
+            lastMobileState = mobile;
+            setSidebarCollapsed(mobile);
+            setAiPanelCollapsed(true);
+        }
+
+        async function requestAI(payload) {
+            const response = await fetch('/api/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {
+                // GitHub Pages 等纯静态部署会返回非 JSON 的 404 页面
+            }
+
+            if (!response.ok) {
+                throw new Error(data?.error || `服务端返回 ${response.status}`);
+            }
+            if (!data || typeof data.text !== 'string' || !data.text.trim()) {
+                throw new Error('AI 服务返回了无效内容');
+            }
+            return data.text.trim();
+        }
+
+        function createLocalSummary(content) {
+            const sentences = content.split(/[。！？\\n]+/)
+                .map(sentence => sentence.trim())
+                .filter(sentence => sentence.length > 8);
+            return sentences.slice(0, 3).join('。') || content.slice(0, 160);
+        }
+
+        function createLocalTags(content) {
+            const phrases = content.match(/[\u4e00-\u9fff]{2,4}/g) || [];
+            const frequency = new Map();
+            phrases.forEach(phrase => frequency.set(phrase, (frequency.get(phrase) || 0) + 1));
+            return [...frequency.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(item => item[0]);
+        }
+
+        function tokenizeText(text) {
+            const normalized = String(text || '').toLowerCase();
+            const tokens = new Set(normalized.match(/[a-z0-9]{2,}/g) || []);
+            const chineseParts = normalized.match(/[\u4e00-\u9fff]+/g) || [];
+            chineseParts.forEach(part => {
+                if (part.length === 1) tokens.add(part);
+                for (let i = 0; i < part.length - 1; i++) tokens.add(part.slice(i, i + 2));
+            });
+            return tokens;
+        }
+
+        function buildKnowledgeContext(query) {
+            const queryNote = { title: query, content: query, tags: [] };
+            let totalLength = 0;
+            return notes
+                .map(note => ({ note, score: noteSimilarity(queryNote, note) }))
+                .filter(item => item.score >= 0.02)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 4)
+                .map(({ note }) => {
+                    const remaining = Math.max(0, 30000 - totalLength);
+                    if (remaining === 0) return '';
+                    const excerpt = note.content.slice(0, Math.min(8000, remaining));
+                    totalLength += excerpt.length;
+                    return `[${note.title}]\n${excerpt}`;
+                })
+                .filter(section => section.length > 0)
+                .join('\n\n---\n\n');
+        }
+
+        function noteSimilarity(left, right) {
+            const leftTokens = tokenizeText(`${left.title} ${left.content} ${left.tags.join(' ')}`);
+            const rightTokens = tokenizeText(`${right.title} ${right.content} ${right.tags.join(' ')}`);
+            if (leftTokens.size === 0 || rightTokens.size === 0) return 0;
+
+            let intersection = 0;
+            leftTokens.forEach(token => { if (rightTokens.has(token)) intersection++; });
+            const textScore = intersection / (leftTokens.size + rightTokens.size - intersection);
+
+            const leftTags = new Set(left.tags);
+            const sharedTags = right.tags.filter(tag => leftTags.has(tag)).length;
+            const tagUnion = new Set([...left.tags, ...right.tags]).size || 1;
+            return textScore * 0.75 + (sharedTags / tagUnion) * 0.25;
+        }
+
+        function renderRelatedNotes() {
+            const section = document.getElementById('relatedSection');
+            const container = document.getElementById('relatedNotes');
+            container.innerHTML = '';
+            if (!currentNote) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            const related = notes
+                .filter(note => note.id !== currentNote.id)
+                .map(note => ({ note, score: noteSimilarity(currentNote, note) }))
+                .filter(item => item.score >= 0.08)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
+
+            if (related.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            related.forEach(({ note, score }) => {
+                const button = document.createElement('button');
+                button.className = 'related-note-btn';
+                button.textContent = `${note.title} · 相关度 ${Math.round(score * 100)}%`;
+                button.onclick = () => openNote(note);
+                container.appendChild(button);
+            });
+            section.classList.remove('hidden');
+        }
+
+        function exportNotes() {
+            const payload = JSON.stringify(notes, null, 2);
+            const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `knowledge-base-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function importNotesBackup(file) {
+            if (!file) return;
+            try {
+                if (file.size > 5 * 1024 * 1024) throw new Error('备份文件不能超过 5MB');
+                const parsed = JSON.parse(await file.text());
+                if (!Array.isArray(parsed)) throw new Error('备份格式不正确');
+                const imported = normalizeNotes(parsed);
+                if (imported.length === 0) throw new Error('备份中没有有效笔记');
+                if (!confirm(`将用备份中的 ${imported.length} 条笔记替换当前数据，是否继续？`)) return;
+
+                const previousNotes = notes;
+                notes = imported;
+                currentNote = null;
+                isDirty = false;
+                if (!saveData()) {
+                    notes = previousNotes;
+                    return;
+                }
+                backToWelcome(true);
+                renderNotes();
+                renderTags();
+                alert('备份导入成功。');
+            } catch (error) {
+                alert('备份导入失败：' + error.message);
             }
         }
 

@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-trixie
+    environment:
+      POSTGRES_DB: knowledge_v2
+      POSTGRES_USER: knowledge
+      POSTGRES_PASSWORD: knowledge
+    ports:
+      - "54329:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U knowledge -d knowledge_v2"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    volumes:
+      - knowledge_v2_pgdata:/var/lib/postgresql/data
+
+volumes:
+  knowledge_v2_pgdata:

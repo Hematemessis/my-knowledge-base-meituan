@@ -1,0 +1,14 @@
+{
+  "name": "my-knowledge-base-meituan",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "本地优先、带安全 AI 代理的个人知识库",
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
